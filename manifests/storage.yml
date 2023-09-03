@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-store
+  namespace: democloudops
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  restartPolicy: Never
+  storageClassName: ""
+
+# Configure a Persistent Volume (PV) to store data for the application.
+# The PV should request at least 50Gi of storage space.
+# Ensure the data stored in the PV survives pod restarts.

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry-deployment
+  namespace: democloudops
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: docker-registry-deployment
+  template:
+    metadata:
+      labels:
+        app: docker-registry-deployment
+    spec:
+      volumes:
+      - name: registry-store
+        hostPath:
+          path: /var/lib/10weeksofcloudops
+      initContainers:
+      - name: alpine-init-container
+        image: alpine:latest
+        command: ['sh', '-c', 'mkdir -p /var/lib/10weeksofcloudops']
+      containers:
+      - name: registry-cloudops
+        image: registry:2.8.2
+        envFrom:
+        - configMapRef:
+            name: registry-configmap
+        volumeMounts:
+        - name: registry-store
+          mountPath: /mnt/registry
+        resources:
+          requests:
+            memory: "1Gi"
+          limits:
+            memory: "2Gi"
+        ports:
+        - containerPort: 5000
+
+
+# The Docker registry should be deployed with three replicas, and each replica should be scheduled on a separate node.
+# Pod runs in a container with image registry:2.8.2 and name as registry-cloudops
+# The application container should store images under /var/lib/10weeksofcloudops.
+
+# Container Configuration:
+
+# The application container should expose itself on port 5000.
+# Kubelet should perform health checks on the registry-cloudops and restart the pod if it doesn't respond on TCP port 5000 for 30 seconds. Kubelet should wait for 15 seconds before performing its first health check
+# The container should request 1Gi Memory, and the limit should be 2Gi
+
+# InitContainer
+# Implement an init container within the registry-cloudops deployment to ensure the presence of the data directory required by the Docker registry.
+# The init container should use an Alpine-based image and create the data directory "/var/lib/10weeksofcloudops" if it doesn't exist.
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: docker-registry-deployment
+  ports:
+  - port: 5000
+    targetPort: 5000
+
+# Create a Kubernetes load balancer service to expose the application externally.
+# The service should map an external port to port 5000 on the pods.

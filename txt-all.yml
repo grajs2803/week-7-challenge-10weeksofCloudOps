@@ -1,0 +1,114 @@
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-configmap
+  namespace: democloudops
+data:
+  REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/10weeksofcloudops
+---
+# Persistent Volume 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-registry-pv
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /var/lib/10weeksofcloudops
+---
+# Persistent  Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-registry-pvc
+  namespace: democloudops
+spec:
+  resources:
+    requests:
+      storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry-deployment
+  namespace: democloudops
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: docker-registry
+  template:
+    metadata:
+      labels:
+        app: docker-registry
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: docker-registry-zone
+                operator: In
+                values:
+                - a
+                - b
+                - c
+      initContainers:
+      - name: alpine-init-container
+        image: alpine:latest
+        command: ['sh', '-c', 'mkdir -p /var/lib/10weeksofcloudops']
+      containers:
+      - name: registry-cloudops
+        image: registry:2.8.2
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
+        envFrom:
+        - configMapRef:
+            name: registry-configmap
+        volumeMounts:
+        - name: registry-config
+          mountPath: /var/lib/registry
+        - name: registry-store
+          mountPath: /var/lib/10weeksofcloudops
+        resources:
+          requests:
+            memory: "1Gi"
+          limits:
+            memory: "2Gi"
+        ports:
+        - containerPort: 5000
+      volumes:
+      - name: registry-store
+        persistentVolumeClaim:
+          claimName: docker-registry-pvc
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: docker-registry
+  ports:
+  - port: 5000
+    targetPort: 5000
+
+---

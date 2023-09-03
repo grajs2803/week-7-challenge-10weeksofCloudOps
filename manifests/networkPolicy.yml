@@ -1,0 +1,33 @@
+# Implement Network Policies to restrict incoming and outgoing network traffic for the Docker registry pods.
+# Allow necessary communication while enforcing security practices.
+
+
+# Default Deny all ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: democloudops
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+# allow from selected pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-docker-registry
+  namespace: democloudops
+spec:
+  podSelector:
+    matchLabels:
+      app: docker-registry
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: allowed-image-registry-pod
+---

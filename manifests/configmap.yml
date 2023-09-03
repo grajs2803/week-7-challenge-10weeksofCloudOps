@@ -1,0 +1,21 @@
+# Store sensitive information in Kubernetes Secrets, such as authentication credentials for the Docker registry.
+# Utilize a ConfigMap to manage configuration settings for the Docker registry deployment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-configmap
+data:
+  config.yml: |
+    version: 0.1
+    storage:
+       filesystem:
+          rootdirectory: /var/lib/10weeksofcloudops
+# docs
+# https://docs.docker.com/registry/deploying/#run-an-externally-accessible-registry
+
+
+# These examples assume the following:
+
+# Your registry URL is https://myregistry.domain.com/.
+# Your DNS, routing, and firewall settings allow access to the registry's host on port 443.
+# You have already obtained a certificate from a certificate authority (CA).
