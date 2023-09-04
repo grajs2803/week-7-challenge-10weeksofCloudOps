@@ -10,3 +10,6 @@
 **/secrets/*.yaml
 **/secrets/*.yml
 **/secrets/*.json
+install-docker.sh
+manifests/certs
+manifests/auth
