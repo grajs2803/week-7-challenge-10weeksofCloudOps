@@ -199,11 +199,6 @@ spec:
       containers:
       - name: registry-cloudops
         image: registry:2.8.2
-        readinessProbe:
-          tcpSocket:
-            port: 5000
-          initialDelaySeconds: 15
-          periodSeconds: 30
         livenessProbe:
           tcpSocket:
             port: 5000
