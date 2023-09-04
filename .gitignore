@@ -1,0 +1,12 @@
+*secrets.yaml
+*secrets.yml
+*secrets.json
+*secrets/*.yaml
+*secrets/*.yml
+*secrets/*.json
+**/secrets.yaml
+**/secrets.yml
+**/secrets.json
+**/secrets/*.yaml
+**/secrets/*.yml
+**/secrets/*.json

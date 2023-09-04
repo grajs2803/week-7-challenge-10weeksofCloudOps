@@ -7,29 +7,60 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: docker-registry-deployment
+      app: docker-registry
   template:
     metadata:
       labels:
-        app: docker-registry-deployment
+        app: docker-registry
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: docker-registry-zone
+                operator: In
+                values:
+                - a
+                - b
+                - c
       volumes:
-      - name: registry-store
-        hostPath:
-          path: /var/lib/10weeksofcloudops
+      - name: data-store
+        persistentVolumeClaim:
+          claimName: docker-store-pvc
+      - name: registry-secret
+        secret:
+          secretName: docker-registry-secret
+      - name: registry-cert-secret
+        secret:
+          secretName: docker-cert-secret
       initContainers:
       - name: alpine-init-container
         image: alpine:latest
-        command: ['sh', '-c', 'mkdir -p /var/lib/10weeksofcloudops']
+        command:
+        - 'sh'
+        - '-c'
+        - 'mkdir -p /var/lib/10weeksofcloudops'
       containers:
       - name: registry-cloudops
         image: registry:2.8.2
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
         envFrom:
         - configMapRef:
             name: registry-configmap
         volumeMounts:
-        - name: registry-store
-          mountPath: /mnt/registry
+        - name: data-store
+          mountPath: /var/lib/10weeksofcloudops
+        - name: registry-secret
+          mountPath: /auth
+        - name: registry-cert-secret
+          mountPath: /certs
         resources:
           requests:
             memory: "1Gi"
@@ -39,19 +70,6 @@ spec:
         - containerPort: 5000
 
 
-# The Docker registry should be deployed with three replicas, and each replica should be scheduled on a separate node.
-# Pod runs in a container with image registry:2.8.2 and name as registry-cloudops
-# The application container should store images under /var/lib/10weeksofcloudops.
-
-# Container Configuration:
-
-# The application container should expose itself on port 5000.
-# Kubelet should perform health checks on the registry-cloudops and restart the pod if it doesn't respond on TCP port 5000 for 30 seconds. Kubelet should wait for 15 seconds before performing its first health check
-# The container should request 1Gi Memory, and the limit should be 2Gi
-
-# InitContainer
-# Implement an init container within the registry-cloudops deployment to ensure the presence of the data directory required by the Docker registry.
-# The init container should use an Alpine-based image and create the data directory "/var/lib/10weeksofcloudops" if it doesn't exist.
 
 ---
 
@@ -62,10 +80,9 @@ metadata:
 spec:
   type: LoadBalancer
   selector:
-    app: docker-registry-deployment
+    app: docker-registry
   ports:
   - port: 5000
     targetPort: 5000
 
-# Create a Kubernetes load balancer service to expose the application externally.
-# The service should map an external port to port 5000 on the pods.
+---

@@ -1,17 +1,7 @@
-# ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: registry-configmap
-  namespace: democloudops
-data:
-  REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/10weeksofcloudops
----
-# Persistent Volume 
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: docker-registry-pv
+  name: docker-store-pv
 spec:
   capacity:
     storage: 50Gi
@@ -21,12 +11,12 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /var/lib/10weeksofcloudops
+  storageClassName: ""
 ---
-# Persistent  Volume Claim
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: docker-registry-pvc
+  name: docker-store-pvc
   namespace: democloudops
 spec:
   resources:
@@ -35,9 +25,93 @@ spec:
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-configmap
+  namespace: democloudops
+data:
+  REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/10weeksofcloudops
+  REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+  REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+  REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+  REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+  REGISTRY_AUTH: htpasswd
+  REGISTRY_HTTP_ADDR: 0.0.0.0:5000
 
 ---
-# Deployment
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-registry-secret
+  namespace: democloudops
+data:
+  htpasswd: |
+    dGVzdHVzZXI6JDJ5JDA1JDdaaFpwOVRZSkNKWkRoYXNaT1Fsek9hRWpsNGVPYUVEQXNJaC9vUWJw
+    V0NlRW1CSjF3L1dTCgo=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-cert-secret
+  namespace: democloudops
+data:
+  domain.crt: |
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFVENDQWZrQ0ZHYXdkVVlIODJlbEhTMkpa
+    aiszaHhCZm5XSG1NQTBHQ1NxR1NJYjNEUUVCQ3dVQU1FVXgKQ3pBSkJnTlZCQVlUQWtGVk1STXdF
+    UVlEVlFRSURBcFRiMjFsTFZOMFlYUmxNU0V3SHdZRFZRUUtEQmhKYm5SbApjbTVsZENCWGFXUm5h
+    WFJ6SUZCMGVTQk1kR1F3SGhjTk1qTXdPVEEwTVRFd09UQTVXaGNOTWpRd09UQXpNVEV3Ck9UQTVX
+    akJGTVFzd0NRWURWUVFHRXdKQlZURVRNQkVHQTFVRUNBd0tVMjl0WlMxVGRHRjBaVEVoTUI4R0Ex
+    VUUKQ2d3WVNXNTBaWEp1WlhRZ1YybGtaMmwwY3lCUWRIa2dUSFJrTUlJQklqQU5CZ2txaGtpRzl3
+    MEJBUUVGQUFPQwpBUThBTUlJQkNnS0NBUUVBeWhLN2NXb1VJVDNXcXNPMEMwY2JMYlErdStKY2Jp
+    ZDRSTmF1QWpwQXp3S25ZRDJyCkoxRE9vSm1GdDVaQ2tpUUVPcmpRaUptRkxrZFdIV1U0M2dabkdj
+    c1plL1BWaXpHQ09CRXFLb1o4b0xFbDhkNS8KUGRMdWNoZUdtaEdjVk12NmJGYU1pUURMQ3ZjVE44
+    K1N6REtLcHNuTnd1MVRYSHhUZzcxV0FERlAxSHdWTlptSwo0WXFEckN4aHYxZlY5eHNKN1MyRGRG
+    TTFOZDRzT0liblZmWXdMRzRzSzVNSXNabE5MODExcys1NW5jYlpHU1JQCnR4OFkxeW9qaEdLUG9R
+    Y0gwYUkyQkJzMXJwaDByVUtTaW5QaktHTWpLTGcrWkt0K0hYNFZkZUlpTVA3UEtzYkcKRXpTRXVJ
+    SllZYXJDcTIwajlTTklHMmFTUC9yOXFSdmwwcHY0VndJREFRQUJNQTBHQ1NxR1NJYjNEUUVCQ3dV
+    QQpBNElCQVFDc0NrS0sxYmhRczBUa0MwYjlLQUdCYzF0NzlpMFRlVkltcmZZcFlZU1JZVjNHaWxW
+    SnJFanpDdHNGCkRlMTRMa1ZEZWdyeW1xelVxNmhPWTYzelc4YUNXRWJnYTZDRmt5ek1EZkxiUUZp
+    UXh3NDVSOUgyRDhQckF6TkcKT2diclhuUmJwNWpyZEdQM0lrZTg3MUNLM0M3eEhpSEtWYTZqYW1B
+    TEE5b1pzYTVNQzYvMk5kcFFCRnFJc3V6bgp6UDBVeEFWTlBXQU8weUtnTXRsdzNWcG9QMFpqbCtW
+    bDJzRDhjRDJCRGRpRmNXQ05OeGg1ZFZaMkk3dFE5OWVkCnBwTTJobXVDY1lBYjB1YS9yVno5SHBR
+    NXZqR2tGaW9mUmg4QlZnV1FEQVlQZDE2MWxPWlBMaVFQNXNNSzh3eFgKKy9uNlJWZjdKQXU1eSsr
+    T2RWVXp3cldtSnBVbwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+
+  domain.key: |
+    LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZB
+    QVNDQktjd2dnU2pBZ0VBQW9JQkFRREtFcnR4YWhRaFBkYXEKdzdRTFJ4c3R0RDY3NGx4dUozaEUx
+    cTRDT2tEUEFxZGdQYXNuVU02Z21ZVzNsa0tTSkFRNnVOQ0ltWVV1UjFZZApaVGplQm1jWnl4bDc4
+    OVdMTVlJNEVTb3Fobnlnc1NYeDNuODkwdTV5RjRhYUVaeFV5L3BzVm95SkFNc0s5eE0zCno1TE1N
+    b3FteWMzQzdWTmNmRk9EdlZZQU1VL1VmQlUxbVlyaGlvT3NMR0cvVjlYM0d3bnRMWU4wVXpVMTNp
+    dzQKaHVkVjlqQXNiaXdya3dpeG1VMHZ6WFd6N25tZHh0a1pKRSszSHhqWEtpT0VZbytoQndmUm9q
+    WUVHeld1bUhTdApRcEtLYytNb1l5TW91RDVrcTM0ZGZoVjE0aUl3L3M4cXhzWVROSVM0Z2xoaHFz
+    S3JiU1AxSTBnYlpwSS8rdjJwCkcrWFNtL2hYQWdNQkFBRUNnZ0VBQzE4U2ZVZGk2cHY0UUpQU3hl
+    K3liOWY4ejhYbFBhMnE3dlRGeGdwUksxVVMKNWkrU09od3FCSStmSHIydDhWdGxnWWgwODdydjY3
+    TEgvYzk4YThJZ2V5c2F2QWIwdFdpTDAydmoyNURGNHFVVgpaWThIeWdyY3NEN3lyQ2poaTBRUFM1
+    bHpQeUowU3FHc3l5ODdLNUtNaXVaQVZmL1UrUmRsKzd2ajR3N2pWeW1xCnNqalBjR1pac0pzNGR6
+    UnVKS0pYQmJjVCtSaTQ4UTFLMGRBOE5nNDRHYU9SYmxXVWl1MkxaajRKWVBQTW1IbFMKS3U5bzRl
+    ZHlid1FhVWlHTXA4NGdReGEvamt4NUN2ejlPMUJNZkNKcTZuRnUvbE1iRllyZGdOeXpKRmJ1QllK
+    YwoxUFVhUkk4L0lkUlNSV1hMWWJUYitvcFNkMGlHUmFWU1dwSFpiL1hmUVFLQmdRRDVvK0JrVHdx
+    OU5zZnVGMkRXCmFZbUZFT0FNZDZUYXpndGJNczlKL2taZEFPUGpYekJwTW00dHRVN0NMelZ1cUly
+    akxETzg2c1kvejJ3Titxd3gKaHFwKzhyYlVwU1ZkMFdrQjE1dy8xYktBdHpjZmhIVVp3QlFpS0Z2
+    aVE4RG5xeHVxYVJrSG15WnlKUWppR0NqZwpyOTkvRVBkL3hLUjlEYURNdmw5V2c1S1RsUUtCZ1FE
+    UE9LRW9KM29UdUQ2ZHNSQzZFSmJSZlhuRjFGOWJaSjA4CjBNQVUycEtGYjViWDcvNTNlcFMvczVl
+    M2VjLzdITTVoWEhMT3JsWlRUbDU2TENhZ0YyUk43RkRSdjl4WUxkZXgKa0dna1RxZFp4bU55S29D
+    dmJUTy9HYUdrOXBFOC9jNzlZRjFHOWdHWmNWeE5FeFQ4ckNCb1oxZmNPQUlkR1IwYgpSR2ZmdENi
+    aE93S0JnUUR3NjhiVEI3VkZobWpNenFNV1NpUDkxNXRpYk5VY2xWMUFWbmpXNEI3b0FzUHIyeUhO
+    ClpHNFFqcm5EamV2ekw1VmFTSDVtQSszd0J5NHhENHEvQVVmcDNETzJaT3I2Nys1M2FLM1NyVm5u
+    L3VtajhTRlMKQ0oxbG1hMlRYKy83cEphK2owOG9tQU15aGF0ZENCUHJROUJkd1BJYXpKd3lVOFNy
+    MDg0T29Fd0ZRUUtCZ0NtbQpCQjRCOFROTmNLaFpFamVUWmZ5czczQ25ncExuNGdKN0ltQU9uaXhi
+    aFVIWlpwZTA5M2lnSy9vZ2JZRFhCVlBrCk5ONzlnelF6S0NIK0JiVmZmalY3TGJNNmtKclllK1dn
+    Vkk0WGtPTW1VSTU5cEdlZDF5eXRoaU9WdXhNN0lBTWsKL3hwb0QySTd1b1Z6TkdDa1o4OFVGa0NZ
+    c1RRUC9CMmkzZzNFTTV4SkFvR0FCYmRaS3NaRWZDcDBTT1grTTFxVwpOTWY1RmZqWkc3NkhZSkpx
+    ODlXYjJ5R1JGZXl4SDhXcXRPYWtZZXFjUUJDeEh5bGJscjJ6K0JvSC9wZ0p1M0grCnBmZ3hwSTcx
+    MEtlb1JHS1JIeXQ4RFdmdlVVVWdqZFJYM3RtMVpMNitNRWdqSUtHRDYzSEN2cldjZzJnOUt1T2cK
+    T1lOVmhocUFyT0MwTHkxbWNwWDVJTHc9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,28 +138,46 @@ spec:
                 - a
                 - b
                 - c
+      volumes:
+      - name: data-store
+        persistentVolumeClaim:
+          claimName: docker-store-pvc
+      - name: registry-secret
+        secret:
+          secretName: docker-registry-secret
+      - name: registry-cert-secret
+        secret:
+          secretName: docker-cert-secret
       initContainers:
       - name: alpine-init-container
         image: alpine:latest
-        command: ['sh', '-c', 'mkdir -p /var/lib/10weeksofcloudops']
+        command:
+        - 'sh'
+        - '-c'
+        - 'mkdir -p /var/lib/10weeksofcloudops'
       containers:
       - name: registry-cloudops
         image: registry:2.8.2
         readinessProbe:
-          httpGet:
-            path: /healthz
+          tcpSocket:
             port: 5000
           initialDelaySeconds: 15
-          periodSeconds: 10
-          failureThreshold: 3
+          periodSeconds: 30
+        livenessProbe:
+          tcpSocket:
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 30
         envFrom:
         - configMapRef:
             name: registry-configmap
         volumeMounts:
-        - name: registry-config
-          mountPath: /var/lib/registry
-        - name: registry-store
+        - name: data-store
           mountPath: /var/lib/10weeksofcloudops
+        - name: registry-secret
+          mountPath: /auth
+        - name: registry-cert-secret
+          mountPath: /certs
         resources:
           requests:
             memory: "1Gi"
@@ -93,16 +185,16 @@ spec:
             memory: "2Gi"
         ports:
         - containerPort: 5000
-      volumes:
-      - name: registry-store
-        persistentVolumeClaim:
-          claimName: docker-registry-pvc
+
+
+
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
   name: registry-service
+  namespace: democloudops
 spec:
   type: LoadBalancer
   selector:

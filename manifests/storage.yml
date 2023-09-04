@@ -1,17 +1,30 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: data-store
-  namespace: democloudops
+  name: docker-store-pv
 spec:
   capacity:
     storage: 50Gi
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  restartPolicy: Never
+  hostPath:
+    path: /var/lib/10weeksofcloudops
   storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-store-pvc
+  namespace: democloudops
+spec:
+  resources:
+    requests:
+      storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
 
 # Configure a Persistent Volume (PV) to store data for the application.
 # The PV should request at least 50Gi of storage space.

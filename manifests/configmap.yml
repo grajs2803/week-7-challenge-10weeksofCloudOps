@@ -4,12 +4,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: registry-configmap
+  namespace: democloudops
 data:
-  config.yml: |
-    version: 0.1
-    storage:
-       filesystem:
-          rootdirectory: /var/lib/10weeksofcloudops
+  REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/10weeksofcloudops
+  REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+  REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+  REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+  REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+  REGISTRY_AUTH: htpasswd
+
 # docs
 # https://docs.docker.com/registry/deploying/#run-an-externally-accessible-registry
 
