@@ -33,8 +33,8 @@ metadata:
   namespace: democloudops
 data:
   REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/10weeksofcloudops
-  REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
-  REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+  REGISTRY_HTTP_TLS_CERTIFICATE: /certs/tls.crt
+  REGISTRY_HTTP_TLS_KEY: /certs/tls.key
   REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
   REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
   REGISTRY_AUTH: htpasswd
@@ -56,8 +56,9 @@ kind: Secret
 metadata:
   name: docker-cert-secret
   namespace: democloudops
+type: kubernetes.io/tls
 data:
-  domain.crt: |
+  tls.crt: |
     LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZNVENDQXhtZ0F3SUJBZ0lVYnZVMW5RY0Vh
     eCtqTmQyRWluZmdyN1gyb3Rvd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0dqRVlNQllHQTFVRUF3d1Ba
     RzlqYTJWeUxYSmxaMmx6ZEhKNU1CNFhEVEl6TURrd05ERTRNREkwTWxvWApEVEkwTURrd016RTRN
@@ -92,7 +93,7 @@ data:
     Ty9nQkR4QUNnNU85VksrCk1aNlJqbzR1UmhiK1NEek01S1NQNW55Rnk0QTNleEV4Q1A5cGlPVm9F
     Nno1UzFOdFJBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
 
-  domain.key: |
+  tls.key: |
     LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRZ0lCQURBTkJna3Foa2lHOXcwQkFRRUZB
     QVNDQ1N3d2dna29BZ0VBQW9JQ0FRRFZCcU5BZkZ5bTJ3R0oKYnozM0h0b2wxSzZMdXpLQnZoN2da
     VFZlRkkyU09Bdjk2ajV3RnZqQitaOFlidWlmTUpBVEF0c0VkeDA5THRYTwpiclVTNitzMURBcU9I
