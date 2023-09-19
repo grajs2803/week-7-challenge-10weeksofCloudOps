@@ -1,0 +1,11 @@
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: docker-store-pv-restore
+  namespace: velero
+spec:
+  includedNamespaces:
+  - democloudops
+  includedResources:
+  - '*.*'
+

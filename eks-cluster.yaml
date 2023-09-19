@@ -1,0 +1,23 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-cluster
+  region: eu-west-2
+
+availabilityZones:
+- "eu-west-2a"
+- "eu-west-2b"
+- "eu-west-2c"
+
+nodeGroups:
+- name: my-nodegroup
+  instanceType: t2.medium
+  desiredCapacity: 3
+  availabilityZones:
+  - "eu-west-2a"
+  - "eu-west-2b"
+  - "eu-west-2c"
+  ssh:
+    publicKeyName: my-ec2-key-pair-name
+

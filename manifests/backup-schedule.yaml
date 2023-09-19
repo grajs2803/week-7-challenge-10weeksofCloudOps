@@ -1,0 +1,36 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: aws-backup-storage
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: s3-democloudps-backup
+    prefix: velero-backup
+  config:
+    region: eu-west-2
+---
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: docker-store-pv-backup
+  namespace: velero
+spec:
+  includedNamespaces:
+  - democloudops
+  snapshotVolumes:
+  - docker-store-pv
+---
+apiVersion: velero.io/v1
+kind: BackupSchedule
+metadata:
+  name: daily-backup-schedule
+  namespace: velero
+spec:
+  schedule: "0 0 * * *"
+  template:
+    includedNamespaces:
+    - democloudops
+    snapshotVolumes: true
+---
