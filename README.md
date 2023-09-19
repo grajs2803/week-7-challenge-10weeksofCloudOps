@@ -49,4 +49,4 @@ This project addresses the need to streamline the build and deployment process i
 
 This project helps streamline your organization's build and deployment processes by providing a robust and scalable Docker image registry on Kubernetes within the "democloudops" namespace.
 
-Feel free to contribute to this project, report issues, or suggest improvements. Happy DevOps-ing!
+Feel free to contribute to this project, report issues, or suggest improvements!
